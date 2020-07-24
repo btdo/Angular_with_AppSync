@@ -119,6 +119,10 @@
           }
         }
       }
-    }},
-  "defaultProject": "appsync-v1"
+    }
+  },
+  "defaultProject": "appsync-v1",
+  "cli": {
+    "analytics": "1b272ba8-b2a2-4059-9771-099ca0261938"
+  }
 }
