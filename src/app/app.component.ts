@@ -3,7 +3,6 @@ import { APIService } from './API.service';
 import Amplify, { Auth } from 'aws-amplify';
 import AWSAppSyncClient, { AUTH_TYPE } from 'aws-appsync';
 import awsconfig from '../aws-exports';
-import { listTodos } from './graphql/queries';
 import gql from 'graphql-tag';
 
 @Component({
@@ -15,10 +14,12 @@ export class AppComponent implements OnInit {
   title = 'appsync-v1';
   todos: Array<any>;
 
+  // We use the gql tag to parse our query string into a query document
+
   constructor(private apiService: APIService) {}
 
   getOIDCToken = async () =>
-    await 'eyJraWQiOiI4WWhSaWRVRjUtNGpMVkFGVWw1V3ZIZU5ENUhGZXJPWDBxOEltY2hTUmZBIiwiYWxnIjoiUlMyNTYifQ.eyJydF9oYXNoIjoiekNRQjR6eW1FLW5QVlZYYUFKZEEzUSIsImlhdCI6MTU5NTYxMDU5MiwiaXNzIjoiaHR0cHM6Ly9zdGcwMDItd3d3LmVwb3N0LmNhL21nYS9zcHMvb2F1dGgvb2F1dGgyMC9tZXRhZGF0YS9jcGMtUk9QQyIsImF0X2hhc2giOiItTUNWNi1zVnp3eVpreXJUSGJXS3RRIiwic3ViIjoic2JzdGcybmFwcCIsImV4cCI6MTU5NTYxNzc5MiwiYXVkIjoiY3BjLVJPUEMtbW9iaWxlIn0.KC1HZcSyyL-8AMa9PxXyXnsXXKMXEjUn4Sv34ilX4DRdztZ_G3eeXmncntQBn226MpStxgbX7vxmW0O2BhOpf3RXmQ9XUy35aeJO3qz785axFlhU1eYK_VOPW-MMWc8CTxsaTxscO_LPjNyxoganKbiBwNnWdt9ERMCJJWd7zEuJOdCnGDZLa2tm6eSQui84FUNvsySw791e6uHCm0CK63z9u1wFR5jFToR9dkav76wTkbZd9zCoTWbybmL0gFL5WXvQMMrijhsm7C5s_nheth4JGL_R_xGa-4-Ux5o_85oez7826V9Wuttm6WVZfbUI9fgYLMcq47b06LSPJK08vQ'; // Should be an async function that handles token refresh
+    await 'eyJraWQiOiI4WWhSaWRVRjUtNGpMVkFGVWw1V3ZIZU5ENUhGZXJPWDBxOEltY2hTUmZBIiwiYWxnIjoiUlMyNTYifQ.eyJydF9oYXNoIjoiY01OVWE3bU5XZ05odFJ4bm5uVXcwUSIsImlhdCI6MTU5NTc3MTU4OSwiaXNzIjoiaHR0cHM6Ly9zdGcwMDItd3d3LmVwb3N0LmNhL21nYS9zcHMvb2F1dGgvb2F1dGgyMC9tZXRhZGF0YS9jcGMtUk9QQyIsImF0X2hhc2giOiJvdV9hak4ta0dlUGVHeTBtWVBVZ0lnIiwic3ViIjoic2JzdGcybmFwcCIsImV4cCI6MTU5NTc3ODc4OSwiYXVkIjoiY3BjLVJPUEMtbW9iaWxlIn0.WtLRXKKst_TrZqX2nen41oGs5vP30H6IdCADd2JL_o3zHM454G6fKkzQedb73vP6wkfuk9EDIPIh1GpkS8BsG9OTSwVlnuptFfGusGjSbQQzD62SlghuEmRwKlmHreHUs_qnzLe7wFMSfrdQoJThgAriY9zo2tMMq-KqlQlS0dU4esMhziR0VmBkqgi48RYAPY83ZwGVFaFF7hrCcuEyeNqIUNwUUrWdot3KIdXkOJ4vwDbBPpr9uknBYEnPO6_I7m8dIByqThXLMeVMIMbDbx7wGlLi_stlQSEwwJuTBeP81j04Kyd_gR08sKWnZzEuWK1Bl5_M6Z1OcTHYwzRCkQ'; // Should be an async function that handles token refresh
 
   client = new AWSAppSyncClient({
     url: awsconfig.aws_appsync_graphqlEndpoint,
@@ -39,12 +40,25 @@ export class AppComponent implements OnInit {
     //   this.todos = [...this.todos, data];
     // });
 
+    const ListTrackItem = gql`
+      query {
+        listTrackItems {
+          items {
+            id
+            pin
+            description
+          }
+        }
+      }
+    `;
+
     this.client
       .query({
-        query: gql(listTodos),
+        query: ListTrackItem,
       })
-      .then(({ data: { listTodos } }) => {
-        console.log(listTodos.items);
+      .then((evt) => {
+        console.log(evt);
+        this.todos = evt.data.listTrackItems.items;
       });
   }
 
@@ -53,5 +67,26 @@ export class AppComponent implements OnInit {
     //   pin: 'Angular',
     //   description: 'testing',
     // });
+
+    const createItemQuery = gql`
+      mutation createTrackItem($pin: String!, $description: String!) {
+        createTrackItem(input: { pin: $pin, description: $description }) {
+          id
+          pin
+          description
+        }
+      }
+    `;
+
+    const createItem = (async () => {
+      const result = await this.client.mutate({
+        mutation: createItemQuery,
+        variables: {
+          pin: '1231231232',
+          description: 'angular',
+        },
+      });
+      console.log(result.data.createTodo);
+    })();
   }
 }

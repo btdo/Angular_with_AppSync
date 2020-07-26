@@ -19,3 +19,4 @@ platformBrowserDynamic()
 
 API.configure(awsconfig);
 PubSub.configure(awsconfig);
+Amplify.configure(awsconfig);
